@@ -1,13 +1,17 @@
 #!/bin/bash
 source "$(dirname "${BASH_SOURCE[0]}")/remindy-common"
 
-choice=$(gum choose \
-  "󰀠 Add reminder" \
-  " List reminders" \
-  " Remove reminder")
+while true; do
+  choice=$(gum choose \
+    "󰀠 Add reminder" \
+    " List reminders" \
+    " Remove reminder" \
+    "Quit")
 
-case "$choice" in
-  "󰀠 Add reminder")     exec remindy-add ;;
-  " List reminders")   exec remindy-list ;;
-  " Remove reminder")  exec remindy-remove ;;
-esac
+  case "$choice" in
+    "󰀠 Add reminder")     remindy-add ;;
+    " List reminders")   remindy-list ;;
+    " Remove reminder")  remindy-remove ;;
+    "Quit"|"")          break ;;
+  esac
+done
