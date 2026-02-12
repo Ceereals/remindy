@@ -19,7 +19,7 @@ A Bash-based reminder system for [Omarchy](https://github.com/basecamp/omarchy) 
 One-liner:
 
 ```bash
-bash <(curl -sSL https://raw.githubusercontent.com/Ceereals/remindy/main/install.sh)
+curl -sSL https://raw.githubusercontent.com/Ceereals/remindy/main/install.sh | bash
 ```
 
 Or from a local clone:
@@ -39,10 +39,25 @@ This will:
 To uninstall:
 
 ```bash
-bash <(curl -sSL https://raw.githubusercontent.com/Ceereals/remindy/main/uninstall.sh)
+curl -sSL https://raw.githubusercontent.com/Ceereals/remindy/main/uninstall.sh | bash
 ```
 
-Or locally: `./uninstall.sh`. Add `--purge` to also remove data and config.
+Or locally: `./uninstall.sh`.
+
+<details>
+<summary>Uninstall and remove all data</summary>
+
+Add `--purge` to also remove reminders, config, and sounds:
+
+```bash
+# Remote
+curl -sSL https://raw.githubusercontent.com/Ceereals/remindy/main/uninstall.sh | bash -s -- --purge
+
+# Local
+./uninstall.sh --purge
+```
+
+</details>
 
 ### Dependencies
 
