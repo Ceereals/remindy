@@ -42,7 +42,7 @@ cd remindy
 ./install.sh
 ```
 
-This copies all scripts to `~/.local/bin/`, creates data and config directories, and enables the systemd timer daemon.
+This copies all scripts to `~/.local/share/omarchy/bin/`, creates data and config directories, and enables the systemd timer daemon.
 
 <details>
 <summary><b>Uninstall</b></summary>

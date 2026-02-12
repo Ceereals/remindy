@@ -4,7 +4,7 @@ set -eEo pipefail
 REPO="Ceereals/remindy"
 REPO_URL="https://github.com/$REPO.git"
 
-INSTALL_DIR="$HOME/.local/bin"
+INSTALL_DIR="$HOME/.local/share/omarchy/bin"
 DATA_DIR="$HOME/.local/share/remindy"
 CONFIG_DIR="$HOME/.config/remindy"
 

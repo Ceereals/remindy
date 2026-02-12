@@ -1,7 +1,7 @@
 #!/bin/bash
 set -eEo pipefail
 
-INSTALL_DIR="$HOME/.local/bin"
+INSTALL_DIR="$HOME/.local/share/omarchy/bin"
 DATA_DIR="$HOME/.local/share/remindy"
 CONFIG_DIR="$HOME/.config/remindy"
 
