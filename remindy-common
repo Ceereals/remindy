@@ -62,3 +62,18 @@ COLOR_ACCENT=212  # pink/magenta accent
 msg_ok()   { gum style --foreground "$COLOR_SUCCESS" "✓ $*"; }
 msg_warn() { gum style --foreground "$COLOR_WARN" "$*"; }
 msg_err()  { gum style --foreground "$COLOR_ERROR" "$*" >&2; }
+
+show_banner() {
+  gum style --foreground "$COLOR_ACCENT" --bold \
+    "                                                                        " \
+    "                                    ,,                    ,,            " \
+    "                                    db                  \`7MM            " \
+    "                                                          MM            " \
+    "\`7Mb,od8 .gP\"Ya \`7MMpMMMb.pMMMb.  \`7MM  \`7MMpMMMb.   ,M\"\"bMM \`7M'   \`MF'" \
+    "  MM' \"',M'   Yb  MM    MM    MM    MM    MM    MM ,AP    MM   VA   ,V  " \
+    "  MM    8M\"\"\"\"\"\"  MM    MM    MM    MM    MM    MM 8MI    MM    VA ,V   " \
+    "  MM    YM.    ,  MM    MM    MM    MM    MM    MM \`Mb    MM     VVV    " \
+    ".JMML.   \`Mbmmd'.JMML  JMML  JMML..JMML..JMML  JMML.\`Wbmd\"MML.   ,V     " \
+    "                                                                ,V      " \
+    "                                                             OOb\"       " 
+}

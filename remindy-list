@@ -2,6 +2,9 @@
 
 source "$(dirname "${BASH_SOURCE[0]}")/remindy-common"
 
+show_banner
+echo ""
+
 count=$(lock_read | jq '.reminders | length')
 
 if [[ "$count" -eq 0 ]]; then

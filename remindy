@@ -5,6 +5,8 @@ trap 'exit 0' INT
 
 while true; do
   clear
+  show_banner
+  echo ""
   choice=$(gum choose \
     "󰀠 Add reminder" \
     " List reminders" \

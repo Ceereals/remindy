@@ -12,6 +12,8 @@ fi
 
 if [[ $# -eq 0 ]]; then
   # Interactive mode: pick reminder via gum filter
+  show_banner
+  echo ""
   selection=$(echo "$data" | jq -r '.reminders[] | [.id, .type, .time, .text] | @tsv' | \
     while IFS=$'\t' read -r id type time text; do
       printf "%s  %-7s %-20s %s\n" "$id" "$type" "$time" "$text"
