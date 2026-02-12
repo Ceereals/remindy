@@ -24,11 +24,7 @@ for ((i = 0; i < count; i++)); do
     once)
       notified=$(echo "$data" | jq -r ".reminders[$i].notified")
       reminder_time=$(echo "$data" | jq -r ".reminders[$i].time")
-      # Compare up to the minute
-      reminder_minute="${reminder_time%:*}"  # strip seconds -> YYYY-MM-DDTHH:MM
-      now_minute="${now_datetime%:*}"
-
-      if [[ "$notified" == "false" && ! "$reminder_minute" > "$now_minute" ]]; then
+      if [[ "$notified" == "false" && ! "$reminder_time" > "$now_datetime" ]]; then
         notify_list+=("$text")
         data=$(echo "$data" | jq ".reminders[$i].notified = true")
         changed=true

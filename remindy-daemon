@@ -28,8 +28,9 @@ EOF
 Description=Remindy timer
 
 [Timer]
-OnCalendar=*:0/1
-Persistent=true
+OnBootSec=1s
+OnUnitActiveSec=1s
+AccuracySec=1s
 
 [Install]
 WantedBy=timers.target
