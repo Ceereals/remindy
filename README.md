@@ -68,16 +68,16 @@ Add `--purge` to also remove reminders, config, and sounds:
 
 All pre-installed on Omarchy:
 
-| Dependency | Purpose |
-|---|---|
-| `jq` | JSON processing |
-| `gum` | Interactive TUI |
-| `flock` (util-linux) | File locking |
-| `notify-send` (libnotify) | Desktop notifications |
-| `paplay` (pulseaudio-utils) | Notification sounds |
-| `systemctl` | Daemon management |
-| `xxd` / `od` | ID generation |
-| GNU `date` | Date arithmetic |
+| Dependency                  | Purpose               |
+| --------------------------- | --------------------- |
+| `jq`                        | JSON processing       |
+| `gum`                       | Interactive TUI       |
+| `flock` (util-linux)        | File locking          |
+| `notify-send` (libnotify)   | Desktop notifications |
+| `paplay` (pulseaudio-utils) | Notification sounds   |
+| `systemctl`                 | Daemon management     |
+| `xxd` / `od`                | ID generation         |
+| GNU `date`                  | Date arithmetic       |
 
 </details>
 
@@ -140,12 +140,12 @@ Returns JSON for Waybar's custom module — shows the next upcoming reminder wit
 
 ## Time formats
 
-| Format | Example | Description |
-|---|---|---|
-| `in <duration>` | `in 30m`, `in 1h30m`, `in 2D` | Relative — from now |
-| `at <time>` | `at 14:30`, `at tomorrow 09:00` | Absolute — bumps to tomorrow if past |
-| `every day at <time>` | `every day at 09:00` | Daily recurring |
-| `every <days> at <time>` | `every monday,friday at 18:00` | Weekly recurring |
+| Format                   | Example                         | Description                          |
+| ------------------------ | ------------------------------- | ------------------------------------ |
+| `in <duration>`          | `in 30m`, `in 1h30m`, `in 2D`   | Relative — from now                  |
+| `at <time>`              | `at 14:30`, `at tomorrow 09:00` | Absolute — bumps to tomorrow if past |
+| `every day at <time>`    | `every day at 09:00`            | Daily recurring                      |
+| `every <days> at <time>` | `every monday,friday at 18:00`  | Weekly recurring                     |
 
 **Duration units:** `Y` years, `M` months, `D` days, `h` hours, `m` minutes, `s` seconds.
 
@@ -245,9 +245,28 @@ Reminders live in `~/.local/share/remindy/reminders.json`:
 ```json
 {
   "reminders": [
-    { "id": "a1b2c3d4", "text": "Standup call", "type": "once", "time": "2025-02-12T14:30:00", "notified": false },
-    { "id": "e5f6g7h8", "text": "Drink water", "type": "daily", "time": "09:00", "last_notified": "2025-02-12" },
-    { "id": "i9j0k1l2", "text": "Weekly review", "type": "weekly", "time": "10:00", "days": [1], "last_notified": "2025-02-10" }
+    {
+      "id": "a1b2c3d4",
+      "text": "Standup call",
+      "type": "once",
+      "time": "2025-02-12T14:30:00",
+      "notified": false
+    },
+    {
+      "id": "e5f6g7h8",
+      "text": "Drink water",
+      "type": "daily",
+      "time": "09:00",
+      "last_notified": "2025-02-12"
+    },
+    {
+      "id": "i9j0k1l2",
+      "text": "Weekly review",
+      "type": "weekly",
+      "time": "10:00",
+      "days": [1],
+      "last_notified": "2025-02-10"
+    }
   ]
 }
 ```
