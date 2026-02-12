@@ -1,0 +1,18 @@
+# Remindy configuration
+# Copy this file to ~/.config/remindy/config and customize as needed.
+# Lines starting with # are comments. All fields are optional — defaults are shown below.
+
+# Play a sound when a reminder fires (true/false)
+sound=true
+
+# Path to the notification sound file (OGG format)
+sound_file="$HOME/.local/share/remindy/sounds/remindy.ogg"
+
+# Hours after which fired one-time reminders are automatically cleaned up
+cleanup_hours=24
+
+# How long the desktop notification stays visible, in milliseconds
+notification_timeout=30000
+
+# Icon shown in the Waybar widget (Nerd Font glyph)
+waybar_icon="󰀠"
