@@ -215,9 +215,23 @@ border-color=#f9e2af
 Suggested keybindings for `~/.config/hypr/bindings.conf`:
 
 ```
-bindd = SUPER, R, Reminders, exec, uwsm-app -- xdg-terminal-exec -e remindy
-bindd = SUPER SHIFT, R, Add reminder, exec, uwsm-app -- xdg-terminal-exec -e remindy-add
+bindd = SUPER, R, Reminders, exec, omarchy-launch-or-focus-tui remindy
+bindd = SUPER SHIFT, R, Add reminder, exec, omarchy-launch-tui remindy-add
 ```
+
+To make remindy open as a floating, centered window, add to `~/.config/hypr/hyprland.conf`:
+
+```
+windowrule = float on, match:class org.omarchy.remindy
+windowrule = center on, match:class org.omarchy.remindy
+windowrule = size 400 250, match:class org.omarchy.remindy
+windowrule = float on, match:class org.omarchy.remindy-add
+windowrule = center on, match:class org.omarchy.remindy-add
+windowrule = size 500 350, match:class org.omarchy.remindy-add
+```
+
+> [!TIP]
+> `omarchy-launch-tui` sets the app-id to `org.omarchy.<command>`, which is what the window rules match against. It uses `xdg-terminal-exec` under the hood, so it works with any terminal (ghostty, kitty, alacritty). Font size cannot be overridden per-window — adjust the window size to fit your terminal's global font size.
 
 > [!IMPORTANT]
 > Check for conflicts with `omarchy-menu-keybindings --print` before adding.
