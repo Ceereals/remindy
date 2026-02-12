@@ -1,8 +1,8 @@
 "custom/remindy": {
-    "exec": "remindy-next",
-    "return-type": "json",
-    "signal": 9,
-    "interval": 60,
-    "on-click": "remindy",
-    "tooltip": true
+  "exec": "remindy-next",
+  "return-type": "json",
+  "signal": 9,
+  "interval": 60,
+  "on-click": "omarchy-launch-tui remindy",
+  "tooltip": true
 }
