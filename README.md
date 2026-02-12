@@ -1,28 +1,40 @@
+<div align="center">
+
 # remindy
 
-A Bash-based reminder system for [Omarchy](https://github.com/basecamp/omarchy) (Arch Linux + Hyprland). Supports one-time, daily, and weekly reminders with desktop notifications, a Waybar widget, and a Walker/Elephant launcher menu.
+**A tiny reminder system for your terminal, built for [Omarchy](https://github.com/basecamp/omarchy).**
 
-<!-- ![screenshot](screenshot.png) -->
+One-time, daily, and weekly reminders — with desktop notifications, a Waybar widget, and a launcher menu.
 
-## Features
+[![License: MIT](https://img.shields.io/badge/License-MIT-f9e2af.svg)](LICENSE)
+[![Bash](https://img.shields.io/badge/Bash-5.0+-89b4fa.svg)](https://www.gnu.org/software/bash/)
+[![Omarchy](https://img.shields.io/badge/Omarchy-skill-cba6f7.svg)](https://github.com/basecamp/omarchy)
 
-- One-time, daily, and weekly reminders
-- Desktop notifications via mako with sound support
-- Waybar widget showing next upcoming reminder
-- Walker/Elephant launcher integration
-- Interactive TUI menus via gum
-- CLI mode for scripting
-- systemd timer daemon (checks every minute)
+<!-- ![demo](https://raw.githubusercontent.com/Ceereals/remindy/main/assets/demo.gif) -->
+
+</div>
+
+---
+
+## Highlights
+
+- **Set it and forget it** — one-time, daily, or weekly schedules
+- **Desktop notifications** via mako with optional sound
+- **Waybar widget** showing the next upcoming reminder
+- **Walker / Elephant** launcher integration
+- **Interactive TUI** powered by [gum](https://github.com/charmbracelet/gum)
+- **CLI mode** for scripting and aliases
+- **systemd timer** daemon — checks every minute, stays out of the way
 
 ## Installation
 
-One-liner:
+**One-liner:**
 
 ```bash
 curl -sSL https://raw.githubusercontent.com/Ceereals/remindy/main/install.sh | bash
 ```
 
-Or from a local clone:
+**From a local clone:**
 
 ```bash
 git clone https://github.com/Ceereals/remindy.git
@@ -30,46 +42,44 @@ cd remindy
 ./install.sh
 ```
 
-This will:
-
-- Copy all scripts to `~/.local/bin/`
-- Create data and config directories
-- Enable the systemd timer daemon
-
-To uninstall:
-
-```bash
-curl -sSL https://raw.githubusercontent.com/Ceereals/remindy/main/uninstall.sh | bash
-```
-
-Or locally: `./uninstall.sh`.
+This copies all scripts to `~/.local/bin/`, creates data and config directories, and enables the systemd timer daemon.
 
 <details>
-<summary>Uninstall and remove all data</summary>
+<summary><b>Uninstall</b></summary>
+
+```bash
+# Remote
+curl -sSL https://raw.githubusercontent.com/Ceereals/remindy/main/uninstall.sh | bash
+
+# Local
+./uninstall.sh
+```
 
 Add `--purge` to also remove reminders, config, and sounds:
 
 ```bash
-# Remote
-curl -sSL https://raw.githubusercontent.com/Ceereals/remindy/main/uninstall.sh | bash -s -- --purge
-
-# Local
 ./uninstall.sh --purge
 ```
 
 </details>
 
-### Dependencies
+<details>
+<summary><b>Dependencies</b></summary>
 
 All pre-installed on Omarchy:
 
-- `jq` - JSON processing
-- `gum` - interactive TUI
-- `flock` (util-linux) - file locking
-- `notify-send` (libnotify) - desktop notifications
-- `paplay` (pulseaudio-utils) - notification sounds
-- `systemctl` - daemon management
-- `xxd` or `od` - ID generation
+| Dependency | Purpose |
+|---|---|
+| `jq` | JSON processing |
+| `gum` | Interactive TUI |
+| `flock` (util-linux) | File locking |
+| `notify-send` (libnotify) | Desktop notifications |
+| `paplay` (pulseaudio-utils) | Notification sounds |
+| `systemctl` | Daemon management |
+| `xxd` / `od` | ID generation |
+| GNU `date` | Date arithmetic |
+
+</details>
 
 ## Usage
 
@@ -79,25 +89,19 @@ All pre-installed on Omarchy:
 remindy
 ```
 
-Opens a gum menu to add, list, or remove reminders.
+Opens a gum-powered menu to add, list, or remove reminders.
 
-### Add a reminder
+### Adding reminders
 
-Interactive mode (no arguments):
-
-```bash
-remindy-add
-```
-
-CLI mode:
+Without arguments, `remindy-add` launches an interactive prompt. With arguments, it works as a CLI:
 
 ```bash
-# One-time, relative
+# Relative time
 remindy-add "Standup call" in 30m
 remindy-add "Deploy" in 1h30m
 remindy-add "Vacation" in 2D
 
-# One-time, absolute
+# Absolute time
 remindy-add "Lunch" at 12:30
 remindy-add "Meeting" at tomorrow 14:00
 
@@ -109,49 +113,22 @@ remindy-add "Weekly review" every monday at 10:00
 remindy-add "Gym" every monday,wednesday,friday at 18:00
 ```
 
-#### Time formats
-
-| Format                   | Example                         | Description                                    |
-| ------------------------ | ------------------------------- | ---------------------------------------------- |
-| `in <duration>`          | `in 30m`, `in 1h30m`, `in 2D`   | Relative time from now                         |
-| `at <time>`              | `at 14:30`, `at tomorrow 09:00` | Absolute time (auto-bumps to tomorrow if past) |
-| `every day at <time>`    | `every day at 09:00`            | Daily recurring                                |
-| `every <days> at <time>` | `every monday at 10:00`         | Weekly recurring                               |
-
-Duration units: `Y` (years), `M` (months), `D` (days), `h` (hours), `m` (minutes), `s` (seconds).
-
-Day names: `monday`/`mon`, `tuesday`/`tue`, `wednesday`/`wed`, `thursday`/`thu`, `friday`/`fri`, `saturday`/`sat`, `sunday`/`sun`. Comma-separated for multiple days.
-
-### List reminders
+### Listing and removing
 
 ```bash
-remindy-list
+remindy-list              # Show all reminders in a table
+remindy-remove            # Interactive picker
+remindy-remove a1b2c3d4   # Remove by ID
 ```
 
-Displays all reminders in a table with ID, type, schedule, and text.
-
-### Remove a reminder
-
-Interactive mode (pick from list):
+### Daemon
 
 ```bash
-remindy-remove
+remindy-daemon enable     # Create and start the systemd timer
+remindy-daemon disable    # Stop and remove it
 ```
 
-By ID:
-
-```bash
-remindy-remove a1b2c3d4
-```
-
-### Daemon management
-
-```bash
-remindy-daemon enable   # Create and start systemd timer
-remindy-daemon disable  # Stop and remove systemd timer
-```
-
-The daemon runs `remindy-check` every minute to send notifications for due reminders.
+The daemon runs `remindy-check` every minute to fire notifications for due reminders.
 
 ### Waybar output
 
@@ -159,26 +136,40 @@ The daemon runs `remindy-check` every minute to send notifications for due remin
 remindy-next
 ```
 
-Outputs JSON for Waybar's custom module: shows the next upcoming reminder with tooltip listing all of today's reminders.
+Returns JSON for Waybar's custom module — shows the next upcoming reminder with a tooltip listing today's schedule.
+
+## Time formats
+
+| Format | Example | Description |
+|---|---|---|
+| `in <duration>` | `in 30m`, `in 1h30m`, `in 2D` | Relative — from now |
+| `at <time>` | `at 14:30`, `at tomorrow 09:00` | Absolute — bumps to tomorrow if past |
+| `every day at <time>` | `every day at 09:00` | Daily recurring |
+| `every <days> at <time>` | `every monday,friday at 18:00` | Weekly recurring |
+
+**Duration units:** `Y` years, `M` months, `D` days, `h` hours, `m` minutes, `s` seconds.
+
+**Day names:** `monday`/`mon` through `sunday`/`sun` — comma-separated for multiple days.
 
 ## Configuration
 
 Config file: `~/.config/remindy/config`
 
 ```bash
-sound=true                                                        # Play sound on notification
-sound_file="$HOME/.local/share/remindy/sounds/remindy.ogg"  # Sound file path
-cleanup_hours=24                                                  # Auto-remove notified one-time reminders after N hours
-notification_timeout=30000                                        # Notification display time in ms
+sound=true                                                    # Play sound on notification
+sound_file="$HOME/.local/share/remindy/sounds/remindy.ogg"   # Sound file path
+cleanup_hours=24                                              # Auto-remove fired one-time reminders after N hours
+notification_timeout=30000                                    # Notification display time (ms)
 ```
 
-Place your `.ogg` sound file at the `sound_file` path to enable notification sounds.
+> [!TIP]
+> Drop an `.ogg` file at the `sound_file` path to enable notification sounds.
 
 ## Integrations
 
 ### Waybar
 
-Add the custom module to your Waybar config (`~/.config/waybar/config.jsonc`):
+Add the custom module to `~/.config/waybar/config.jsonc`:
 
 ```jsonc
 "custom/remindy": {
@@ -191,13 +182,7 @@ Add the custom module to your Waybar config (`~/.config/waybar/config.jsonc`):
 }
 ```
 
-Add it to your modules list, e.g.:
-
-```jsonc
-"modules-right": ["custom/remindy", ...]
-```
-
-Add the CSS to your Waybar stylesheet (`~/.config/waybar/style.css`):
+Then add `"custom/remindy"` to your modules list and append to `~/.config/waybar/style.css`:
 
 ```css
 #custom-remindy {
@@ -212,9 +197,12 @@ Add the CSS to your Waybar stylesheet (`~/.config/waybar/style.css`):
 }
 ```
 
+> [!NOTE]
+> Run `omarchy-restart-waybar` after editing Waybar config.
+
 ### Mako
 
-Add to your mako config (`~/.config/mako/config`):
+Add to `~/.config/mako/config`:
 
 ```ini
 [app-name=Remindy]
@@ -224,24 +212,23 @@ border-color=#f9e2af
 
 ### Hyprland
 
-Add keybindings to your Hyprland config:
+Suggested keybindings for `~/.config/hypr/bindings.conf`:
 
 ```
 bindd = SUPER, R, Reminders, exec, uwsm-app -- xdg-terminal-exec -e remindy
 bindd = SUPER SHIFT, R, Add reminder, exec, uwsm-app -- xdg-terminal-exec -e remindy-add
 ```
 
-Check for conflicts with `omarchy-menu-keybindings --print` before adding.
+> [!IMPORTANT]
+> Check for conflicts with `omarchy-menu-keybindings --print` before adding.
 
 ### Walker / Elephant
-
-Copy the Elephant menu plugin:
 
 ```bash
 cp config/elephant/remindy.lua ~/.config/elephant/menus/remindy.lua
 ```
 
-Add the Walker prefix to `~/.config/walker/config.toml`:
+Add the prefix to `~/.config/walker/config.toml`:
 
 ```toml
 [[providers.prefixes]]
@@ -251,12 +238,50 @@ provider = "menus:remindy"
 
 Type `!` in Walker to access reminders.
 
-## Data
+## Data storage
 
-Reminders are stored in `~/.local/share/remindy/reminders.json`. If the file becomes corrupted, reset it with:
+Reminders live in `~/.local/share/remindy/reminders.json`:
+
+```json
+{
+  "reminders": [
+    { "id": "a1b2c3d4", "text": "Standup call", "type": "once", "time": "2025-02-12T14:30:00", "notified": false },
+    { "id": "e5f6g7h8", "text": "Drink water", "type": "daily", "time": "09:00", "last_notified": "2025-02-12" },
+    { "id": "i9j0k1l2", "text": "Weekly review", "type": "weekly", "time": "10:00", "days": [1], "last_notified": "2025-02-10" }
+  ]
+}
+```
+
+If the file gets corrupted:
 
 ```bash
 echo '{"reminders":[]}' > ~/.local/share/remindy/reminders.json
+```
+
+## Project structure
+
+```
+remindy/
+├── bin/
+│   ├── remindy                  # Entry point — gum menu
+│   ├── remindy-add              # Add reminder (CLI + interactive)
+│   ├── remindy-list             # List reminders (gum table)
+│   ├── remindy-remove           # Remove reminder (by ID or picker)
+│   ├── remindy-check            # Daemon — check & notify
+│   ├── remindy-next             # Waybar JSON output
+│   ├── remindy-daemon           # Enable/disable systemd timer
+│   └── remindy-common           # Shared library (sourced by all)
+├── config/
+│   ├── config.default           # Default config template
+│   ├── waybar-module.jsonc      # Waybar module snippet
+│   ├── waybar-style.css         # Waybar CSS snippet
+│   ├── mako-rule.conf           # Mako notification rule
+│   └── elephant/
+│       └── remindy.lua          # Walker/Elephant menu plugin
+├── sounds/.gitkeep
+├── install.sh
+├── uninstall.sh
+└── LICENSE
 ```
 
 ## License
