@@ -96,12 +96,12 @@ remindy-add "Gym" every monday,wednesday,friday at 18:00
 
 #### Time formats
 
-| Format | Example | Description |
-|--------|---------|-------------|
-| `in <duration>` | `in 30m`, `in 1h30m`, `in 2D` | Relative time from now |
-| `at <time>` | `at 14:30`, `at tomorrow 09:00` | Absolute time (auto-bumps to tomorrow if past) |
-| `every day at <time>` | `every day at 09:00` | Daily recurring |
-| `every <days> at <time>` | `every monday at 10:00` | Weekly recurring |
+| Format                   | Example                         | Description                                    |
+| ------------------------ | ------------------------------- | ---------------------------------------------- |
+| `in <duration>`          | `in 30m`, `in 1h30m`, `in 2D`   | Relative time from now                         |
+| `at <time>`              | `at 14:30`, `at tomorrow 09:00` | Absolute time (auto-bumps to tomorrow if past) |
+| `every day at <time>`    | `every day at 09:00`            | Daily recurring                                |
+| `every <days> at <time>` | `every monday at 10:00`         | Weekly recurring                               |
 
 Duration units: `Y` (years), `M` (months), `D` (days), `h` (hours), `m` (minutes), `s` (seconds).
 
@@ -186,14 +186,14 @@ Add the CSS to your Waybar stylesheet (`~/.config/waybar/style.css`):
 
 ```css
 #custom-remindy {
-    padding: 0 8px;
+  padding: 0 8px;
 }
 #custom-remindy.has-reminder {
-    color: #f9e2af;
+  color: #f9e2af;
 }
 #custom-remindy.no-reminder {
-    color: #585b70;
-    font-size: 0;
+  color: #585b70;
+  font-size: 0;
 }
 ```
 
