@@ -32,6 +32,17 @@ else
   git clone --depth 1 "$REPO_URL" "$SRC_DIR" 2>/dev/null
 fi
 
+# Detect existing installation
+UPDATING=false
+if [[ -f "$INSTALL_DIR/remindy" ]]; then
+  UPDATING=true
+  echo "Existing installation detected — updating..."
+  echo ""
+  echo "⚠  Check the release page for breaking changes:"
+  echo "   https://github.com/$REPO/releases"
+  echo ""
+fi
+
 # Install scripts
 mkdir -p "$INSTALL_DIR"
 for script in "${SCRIPTS[@]}"; do
@@ -58,14 +69,19 @@ if [[ ! -f "$DATA_DIR/reminders.json" ]]; then
   echo '{"reminders":[]}' > "$DATA_DIR/reminders.json"
 fi
 
-# Enable daemon
+# Enable daemon (re-enable on update to pick up any service file changes)
 "$INSTALL_DIR/remindy-daemon" enable
 
 # Cleanup temp dir
 [[ -n "$CLEANUP" ]] && rm -rf "$CLEANUP"
 
 echo ""
-echo "Installed! Scripts are in $INSTALL_DIR"
+if [[ "$UPDATING" == true ]]; then
+  echo "Updated! Scripts are in $INSTALL_DIR"
+  echo "Your config and reminders were preserved."
+else
+  echo "Installed! Scripts are in $INSTALL_DIR"
+fi
 echo ""
 echo "Integration snippets are at: https://github.com/$REPO/tree/main/config"
 echo "  - Waybar module:  config/waybar-module.jsonc + config/waybar-style.css"
