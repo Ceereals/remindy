@@ -40,7 +40,7 @@ done <<< "$entries"
 next_text=""
 while IFS=$'\t' read -r t txt; do
   if [[ ! "$t" < "$now_time" ]]; then
-    next_text="⏰ $t"
+    next_text="$waybar_icon $t"
     break
   fi
 done <<< "$entries"
@@ -48,7 +48,7 @@ done <<< "$entries"
 # If all are past, show the last one
 if [[ -z "$next_text" ]]; then
   last_time=$(echo "$entries" | tail -1 | cut -f1)
-  next_text="⏰ $last_time"
+  next_text="$waybar_icon $last_time"
 fi
 
 printf '{"text":"%s","tooltip":"%s","class":"has-reminder"}\n' "$next_text" "$tooltip"
