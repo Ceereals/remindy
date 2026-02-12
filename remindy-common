@@ -22,6 +22,7 @@ sound=true
 sound_file="$DATA_DIR/sounds/remindy.ogg"
 cleanup_hours=24
 notification_timeout=30000
+waybar_icon="󰀠"
 [[ -f "$CONFIG_FILE" ]] && source "$CONFIG_FILE"
 
 lock_write() {
