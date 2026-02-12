@@ -1,0 +1,54 @@
+#!/bin/bash
+set -eEo pipefail
+
+SERVICE_NAME="remindy"
+SERVICE_DIR="$HOME/.config/systemd/user"
+SERVICE_FILE="$SERVICE_DIR/$SERVICE_NAME.service"
+TIMER_FILE="$SERVICE_DIR/$SERVICE_NAME.timer"
+CHECK_BIN="$HOME/.local/bin/remindy-check"
+
+action="${1:-}"
+
+case "$action" in
+  enable)
+    mkdir -p "$SERVICE_DIR"
+
+    cat > "$SERVICE_FILE" <<EOF
+[Unit]
+Description=Remindy checker
+
+[Service]
+Type=oneshot
+ExecStart=$CHECK_BIN
+Environment=DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/%U/bus
+EOF
+
+    cat > "$TIMER_FILE" <<EOF
+[Unit]
+Description=Remindy timer
+
+[Timer]
+OnCalendar=*:0/1
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+EOF
+
+    systemctl --user daemon-reload
+    systemctl --user enable --now "$SERVICE_NAME.timer"
+    echo "Remindy daemon enabled."
+    ;;
+
+  disable)
+    systemctl --user disable --now "$SERVICE_NAME.timer" 2>/dev/null || true
+    rm -f "$SERVICE_FILE" "$TIMER_FILE"
+    systemctl --user daemon-reload
+    echo "Remindy daemon disabled."
+    ;;
+
+  *)
+    echo "Usage: $(basename "$0") enable|disable"
+    exit 1
+    ;;
+esac

@@ -1,0 +1,8 @@
+"custom/remindy": {
+    "exec": "remindy-next",
+    "return-type": "json",
+    "signal": 9,
+    "interval": 60,
+    "on-click": "remindy",
+    "tooltip": true
+}

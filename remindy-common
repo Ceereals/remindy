@@ -1,0 +1,63 @@
+#!/bin/bash
+
+DATA_DIR=~/.local/share/remindy
+CONFIG_FILE=~/.config/remindy/config
+REMINDERS_FILE="$DATA_DIR/reminders.json"
+LOCK_FILE=/tmp/remindy.lock
+
+mkdir -p "$DATA_DIR/sounds"
+mkdir -p ~/.config/remindy
+[[ -f "$REMINDERS_FILE" ]] || echo '{"reminders":[]}' > "$REMINDERS_FILE"
+
+# Validate JSON integrity
+if ! jq empty "$REMINDERS_FILE" 2>/dev/null; then
+  echo "Error: $REMINDERS_FILE is corrupted." >&2
+  echo "Check the file manually, or reset with:" >&2
+  echo "  echo '{\"reminders\":[]}' > $REMINDERS_FILE" >&2
+  exit 1
+fi
+
+# Config defaults
+sound=true
+sound_file="$DATA_DIR/sounds/remindy.ogg"
+cleanup_hours=24
+notification_timeout=30000
+[[ -f "$CONFIG_FILE" ]] && source "$CONFIG_FILE"
+
+lock_write() {
+  local tmp="$REMINDERS_FILE.tmp"
+  (
+    flock -x 200
+    cat > "$tmp"
+    mv "$tmp" "$REMINDERS_FILE"
+  ) 200>"$LOCK_FILE"
+}
+
+lock_read() {
+  (
+    flock -s 200
+    cat "$REMINDERS_FILE"
+  ) 200>"$LOCK_FILE"
+}
+
+gen_id() {
+  if command -v xxd &>/dev/null; then
+    head -c 4 /dev/urandom | xxd -p
+  else
+    head -c 4 /dev/urandom | od -An -tx1 | tr -d ' \n'
+  fi
+}
+
+signal_waybar() {
+  pkill -RTMIN+9 waybar 2>/dev/null || true
+}
+
+# Consistent gum colors
+COLOR_SUCCESS=2   # green
+COLOR_WARN=3      # yellow
+COLOR_ERROR=1     # red
+COLOR_ACCENT=212  # pink/magenta accent
+
+msg_ok()   { gum style --foreground "$COLOR_SUCCESS" "✓ $*"; }
+msg_warn() { gum style --foreground "$COLOR_WARN" "$*"; }
+msg_err()  { gum style --foreground "$COLOR_ERROR" "$*" >&2; }

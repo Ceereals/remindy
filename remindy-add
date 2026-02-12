@@ -1,0 +1,165 @@
+#!/bin/bash
+
+source "$(dirname "${BASH_SOURCE[0]}")/remindy-common"
+
+if [[ $# -eq 0 ]]; then
+  # Interactive mode
+  text=$(gum input --placeholder "What do you need to remember?")
+  [[ -z "$text" ]] && exit 0
+
+  type_choice=$(gum choose "Once" "Daily" "Weekly")
+  [[ -z "$type_choice" ]] && exit 0
+
+  case "$type_choice" in
+    Once)
+      when=$(gum input --placeholder "When? (in 30m / at 14:30 / at tomorrow 14:30)")
+      [[ -z "$when" ]] && exit 0
+      # Split into keyword + timespec: "in 30m" → keyword=in, timespec=30m
+      keyword="${when%% *}"
+      timespec="${when#* }"
+      ;;
+    Daily)
+      time_input=$(gum input --placeholder "At what time? (HH:MM)")
+      [[ -z "$time_input" ]] && exit 0
+      keyword="every"
+      timespec="day at $time_input"
+      ;;
+    Weekly)
+      days_input=$(gum choose --no-limit "Monday" "Tuesday" "Wednesday" "Thursday" "Friday" "Saturday" "Sunday")
+      [[ -z "$days_input" ]] && exit 0
+      # Join selected days with commas
+      day_csv=$(echo "$days_input" | tr '\n' ',' | sed 's/,$//')
+      time_input=$(gum input --placeholder "At what time? (HH:MM)")
+      [[ -z "$time_input" ]] && exit 0
+      keyword="every"
+      timespec="$day_csv at $time_input"
+      ;;
+  esac
+
+  # Show recap and confirm
+  gum style --border rounded --padding "0 1" --margin "1 0" \
+    "Reminder: $text" \
+    "Schedule: $keyword $timespec"
+  gum confirm "Add this reminder?" || exit 0
+else
+  text="$1"
+  shift
+  keyword="$1"
+  shift
+  timespec="$*"
+fi
+
+case "$keyword" in
+  in) 
+    [[ "$timespec" =~ ^([0-9]+Y)?([0-9]+M)?([0-9]+D)?([0-9]+h)?([0-9]+m)?([0-9]+s)?$ ]]
+
+    if [[ -z "${BASH_REMATCH[0]}" ]]; then
+      msg_err "Time format not valid: $timespec"
+      exit 1
+    fi
+    years="${BASH_REMATCH[1]%Y}"
+    months="${BASH_REMATCH[2]%M}"
+    days="${BASH_REMATCH[3]%D}"
+    hours="${BASH_REMATCH[4]%h}"
+    minutes="${BASH_REMATCH[5]%m}"
+    seconds="${BASH_REMATCH[6]%s}"
+
+    datestr=""
+    [[ -n "$years" ]]   && datestr+="$years years "
+    [[ -n "$months" ]]  && datestr+="$months months "
+    [[ -n "$days" ]]    && datestr+="$days days "
+    [[ -n "$hours" ]]   && datestr+="$hours hours "
+    [[ -n "$minutes" ]] && datestr+="$minutes minutes "
+    [[ -n "$seconds" ]] && datestr+="$seconds seconds "
+
+    target=$(date -d "+$datestr" +%Y-%m-%dT%H:%M:%S)
+    ;;
+  at)
+    target=$(date -d "$timespec" +%Y-%m-%dT%H:%M:%S 2>/dev/null) || {
+      msg_err "Invalid time: $timespec"; exit 1
+    }
+    # If time is in the past and user gave only HH:MM (no date), bump to tomorrow
+    if [[ "$target" < "$(date +%Y-%m-%dT%H:%M:%S)" ]]; then
+      if [[ "$timespec" =~ ^[0-9]{1,2}:[0-9]{2}$ ]]; then
+        target=$(date -d "tomorrow $timespec" +%Y-%m-%dT%H:%M:%S)
+      fi
+    fi
+    ;;
+  every)
+    # every day at HH:MM → daily
+    # every monday at HH:MM → weekly
+    # every monday,friday at HH:MM → weekly with multiple days
+    if [[ "$timespec" =~ ^day[[:space:]]+at[[:space:]]+([0-9]{1,2}:[0-9]{2})$ ]]; then
+      reminder_type="daily"
+      target="${BASH_REMATCH[1]}"
+    elif [[ "$timespec" =~ ^([a-zA-Z,]+)[[:space:]]+at[[:space:]]+([0-9]{1,2}:[0-9]{2})$ ]]; then
+      reminder_type="weekly"
+      target="${BASH_REMATCH[2]}"
+      day_names="${BASH_REMATCH[1]}"
+
+      days_array="[]"
+      IFS=',' read -ra day_list <<< "$day_names"
+      for d in "${day_list[@]}"; do
+        d=$(echo "$d" | tr '[:upper:]' '[:lower:]')
+        case "$d" in
+          monday|mon)    day_num=1 ;;
+          tuesday|tue)   day_num=2 ;;
+          wednesday|wed) day_num=3 ;;
+          thursday|thu)  day_num=4 ;;
+          friday|fri)    day_num=5 ;;
+          saturday|sat)  day_num=6 ;;
+          sunday|sun)    day_num=7 ;;
+          *) msg_err "Unknown day: $d"; exit 1 ;;
+        esac
+        days_array=$(echo "$days_array" | jq --argjson n "$day_num" '. += [$n]')
+      done
+    else
+      msg_err "Usage: remindy-add \"text\" every day at HH:MM | every monday at HH:MM"
+      exit 1
+    fi
+    ;;
+  *) msg_err "Usage: remindy-add \"text\" in 30m | at 14:30 | every day at HH:MM"; exit 1 ;;
+esac
+
+# Warn if once reminder is in the past
+if [[ "${reminder_type:-once}" == "once" && "$target" < "$(date +%Y-%m-%dT%H:%M:%S)" ]]; then
+  msg_warn "Warning: this time is in the past ($target)"
+  gum confirm "Add it anyway?" || exit 0
+fi
+
+id=$(gen_id)
+created=$(date +%Y-%m-%dT%H:%M:%S)
+
+case "${reminder_type:-once}" in
+  once)
+    jq --arg id "$id" \
+       --arg text "$text" \
+       --arg time "$target" \
+       --arg created "$created" \
+       '.reminders += [{"id":$id,"text":$text,"time":$time,"type":"once","created":$created,"notified":false}]' \
+       "$REMINDERS_FILE" | lock_write
+    display_time="$target"
+    ;;
+  daily)
+    jq --arg id "$id" \
+       --arg text "$text" \
+       --arg time "$target" \
+       --arg created "$created" \
+       '.reminders += [{"id":$id,"text":$text,"time":$time,"type":"daily","created":$created,"last_notified":""}]' \
+       "$REMINDERS_FILE" | lock_write
+    display_time="every day at $target"
+    ;;
+  weekly)
+    jq --arg id "$id" \
+       --arg text "$text" \
+       --arg time "$target" \
+       --arg created "$created" \
+       --argjson days "$days_array" \
+       '.reminders += [{"id":$id,"text":$text,"time":$time,"type":"weekly","days":$days,"created":$created,"last_notified":""}]' \
+       "$REMINDERS_FILE" | lock_write
+    display_time="every $day_names at $target"
+    ;;
+esac
+
+msg_ok "Reminder added: \"$text\" → $display_time (id: $id)"
+signal_waybar

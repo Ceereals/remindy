@@ -1,0 +1,54 @@
+#!/bin/bash
+set -eEo pipefail
+
+source "$(dirname "${BASH_SOURCE[0]}")/remindy-common"
+
+now_date=$(date +%Y-%m-%d)
+now_time=$(date +%H:%M)
+now_dow=$(date +%u)
+
+data=$(lock_read)
+
+# Collect today's valid reminders as "HH:MM\ttext" lines, sorted by time
+entries=$(echo "$data" | jq -r --arg today "$now_date" --arg dow "$now_dow" '
+  .reminders | map(
+    if .type == "once" and .notified == false and (.time | startswith($today)) then
+      { time: (.time[11:16]), text: .text }
+    elif .type == "daily" then
+      { time: .time, text: .text }
+    elif .type == "weekly" and (.days | map(tostring) | index($dow)) then
+      { time: .time, text: .text }
+    else
+      empty
+    end
+  ) | sort_by(.time) | .[] | "\(.time)\t\(.text)"
+')
+
+if [[ -z "$entries" ]]; then
+  printf '{"text":"","tooltip":"No reminders","class":"no-reminder"}\n'
+  exit 0
+fi
+
+# Build tooltip: all reminders
+tooltip=""
+while IFS=$'\t' read -r t txt; do
+  [[ -n "$tooltip" ]] && tooltip+="\\n"
+  tooltip+="$t - $txt"
+done <<< "$entries"
+
+# Find next future reminder
+next_text=""
+while IFS=$'\t' read -r t txt; do
+  if [[ ! "$t" < "$now_time" ]]; then
+    next_text="⏰ $t"
+    break
+  fi
+done <<< "$entries"
+
+# If all are past, show the last one
+if [[ -z "$next_text" ]]; then
+  last_time=$(echo "$entries" | tail -1 | cut -f1)
+  next_text="⏰ $last_time"
+fi
+
+printf '{"text":"%s","tooltip":"%s","class":"has-reminder"}\n' "$next_text" "$tooltip"

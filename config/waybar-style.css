@@ -1,0 +1,10 @@
+#custom-remindy {
+    padding: 0 8px;
+}
+#custom-remindy.has-reminder {
+    color: #f9e2af;
+}
+#custom-remindy.no-reminder {
+    color: #585b70;
+    font-size: 0;
+}

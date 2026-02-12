@@ -1,0 +1,38 @@
+#!/bin/bash
+
+source "$(dirname "${BASH_SOURCE[0]}")/remindy-common"
+
+data=$(lock_read)
+count=$(echo "$data" | jq '.reminders | length')
+
+if [[ "$count" -eq 0 ]]; then
+  msg_warn "No reminders to remove"
+  exit 0
+fi
+
+if [[ $# -eq 0 ]]; then
+  # Interactive mode: pick reminder via gum filter
+  selection=$(echo "$data" | jq -r '.reminders[] | [.id, .type, .time, .text] | @tsv' | \
+    while IFS=$'\t' read -r id type time text; do
+      printf "%s  %-7s %-20s %s\n" "$id" "$type" "$time" "$text"
+    done | gum filter --header "Select reminder to remove")
+
+  [[ -z "$selection" ]] && exit 0
+  id=$(echo "$selection" | awk '{print $1}')
+else
+  id="$1"
+fi
+
+# Check reminder exists
+match=$(echo "$data" | jq --arg id "$id" '.reminders[] | select(.id == $id)')
+if [[ -z "$match" ]]; then
+  msg_err "Reminder not found: $id"
+  exit 1
+fi
+
+text=$(echo "$match" | jq -r '.text')
+
+echo "$data" | jq --arg id "$id" '.reminders |= map(select(.id != $id))' | lock_write
+
+msg_ok "Removed: \"$text\" (id: $id)"
+signal_waybar

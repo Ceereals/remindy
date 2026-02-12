@@ -1,0 +1,96 @@
+#!/bin/bash
+set -eEo pipefail
+
+source "$(dirname "${BASH_SOURCE[0]}")/remindy-common"
+
+now_datetime=$(date +%Y-%m-%dT%H:%M:%S)
+now_date=$(date +%Y-%m-%d)
+now_time=$(date +%H:%M)
+now_dow=$(date +%u)  # 1=Mon, 7=Sun
+
+data=$(lock_read)
+count=$(echo "$data" | jq '.reminders | length')
+
+[[ "$count" -eq 0 ]] && exit 0
+
+changed=false
+notify_list=()
+
+for ((i = 0; i < count; i++)); do
+  type=$(echo "$data" | jq -r ".reminders[$i].type")
+  text=$(echo "$data" | jq -r ".reminders[$i].text")
+
+  case "$type" in
+    once)
+      notified=$(echo "$data" | jq -r ".reminders[$i].notified")
+      reminder_time=$(echo "$data" | jq -r ".reminders[$i].time")
+      # Compare up to the minute
+      reminder_minute="${reminder_time%:*}"  # strip seconds -> YYYY-MM-DDTHH:MM
+      now_minute="${now_datetime%:*}"
+
+      if [[ "$notified" == "false" && ! "$reminder_minute" > "$now_minute" ]]; then
+        notify_list+=("$text")
+        data=$(echo "$data" | jq ".reminders[$i].notified = true")
+        changed=true
+      fi
+      ;;
+
+    daily)
+      reminder_time=$(echo "$data" | jq -r ".reminders[$i].time")
+      last_notified=$(echo "$data" | jq -r ".reminders[$i].last_notified // \"\"")
+
+      if [[ "$reminder_time" == "$now_time" && "$last_notified" != "$now_date" ]]; then
+        notify_list+=("$text")
+        data=$(echo "$data" | jq ".reminders[$i].last_notified = \"$now_date\"")
+        changed=true
+      fi
+      ;;
+
+    weekly)
+      reminder_time=$(echo "$data" | jq -r ".reminders[$i].time")
+      last_notified=$(echo "$data" | jq -r ".reminders[$i].last_notified // \"\"")
+      days=$(echo "$data" | jq -r ".reminders[$i].days[]")
+
+      match=false
+      for d in $days; do
+        [[ "$d" == "$now_dow" ]] && match=true
+      done
+
+      if [[ "$match" == "true" && "$reminder_time" == "$now_time" && "$last_notified" != "$now_date" ]]; then
+        notify_list+=("$text")
+        data=$(echo "$data" | jq ".reminders[$i].last_notified = \"$now_date\"")
+        changed=true
+      fi
+      ;;
+  esac
+done
+
+# Cleanup: remove once reminders that were notified and are older than cleanup_hours
+cutoff=$(date -d "-${cleanup_hours} hours" +%Y-%m-%dT%H:%M:%S)
+cleaned=$(echo "$data" | jq --arg cutoff "$cutoff" '
+  .reminders |= map(
+    select(
+      .type != "once" or .notified != true or .created > $cutoff
+    )
+  )
+')
+
+if [[ "$cleaned" != "$data" ]]; then
+  data="$cleaned"
+  changed=true
+fi
+
+# Write back if anything changed
+if [[ "$changed" == "true" ]]; then
+  echo "$data" | lock_write
+  signal_waybar
+fi
+
+# Send notifications
+for text in "${notify_list[@]}"; do
+  notify-send -u critical -a "Remindy" -i alarm-symbolic -t "${notification_timeout:-10000}" "⏰ Reminder" "$text"
+
+  if [[ "$sound" == "true" && -f "$sound_file" ]]; then
+    paplay "$sound_file" &
+  fi
+done
