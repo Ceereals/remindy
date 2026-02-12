@@ -17,8 +17,8 @@ day_num_to_name() {
 }
 
 # Build table rows: ID<tab>Type<tab>When<tab>Text
-lock_read | jq -r '.reminders[] | "\(.id)\t\(.type)\t\(.time)\t\((.days // []) | map(tostring) | join(",") | if . == "" then "-" else . end)\t\(.text)"' | \
-while IFS=$'\t' read -r id type time days text; do
+lock_read | jq -r '.reminders[] | "\(.id)\t\(.type)\t\(.time)\t\((.days // []) | map(tostring) | join(",") | if . == "" then "-" else . end)\t\(.notified // .last_notified // "-")\t\(.text)"' | \
+while IFS=$'\t' read -r id type time days notified text; do
   case "$type" in
     once)
       day="${time:0:10}"
@@ -38,5 +38,22 @@ while IFS=$'\t' read -r id type time days text; do
       quando="Every $day_names at $time"
       ;;
   esac
-  printf '%s\t%s\t%s\t%s\n' "$id" "$type" "$quando" "$text"
-done | gum table --separator $'\t' --columns "ID,Type,When,Text" --print
+  # Format notified value with colors
+  case "$type" in
+    once)
+      if [[ "$notified" == "true" ]]; then
+        notified_display=$'\e[32mYes\e[0m'
+      else
+        notified_display=$'\e[33mNo\e[0m'
+      fi
+      ;;
+    *)
+      if [[ "$notified" == "-" || "$notified" == "null" ]]; then
+        notified_display=$'\e[33m-\e[0m'
+      else
+        notified_display=$'\e[32m'"$notified"$'\e[0m'
+      fi
+      ;;
+  esac
+  printf '%s\t%s\t%s\t%s\t%s\n' "$id" "$type" "$quando" "$notified_display" "$text"
+done | gum table --separator $'\t' --columns "ID,Type,When,Notified,Text" --print
