@@ -160,6 +160,7 @@ sound=true                                                    # Play sound on no
 sound_file="$HOME/.local/share/remindy/sounds/remindy.ogg"   # Sound file path
 cleanup_hours=24                                              # Auto-remove fired one-time reminders after N hours
 notification_timeout=30000                                    # Notification display time (ms)
+waybar_icon="󰀠"                                               # Nerd Font glyph for Waybar widget
 ```
 
 > [!TIP]
@@ -177,7 +178,7 @@ Add the custom module to `~/.config/waybar/config.jsonc`:
     "return-type": "json",
     "signal": 9,
     "interval": 60,
-    "on-click": "remindy",
+    "on-click": "omarchy-launch-tui remindy",
     "tooltip": true
 }
 ```
@@ -212,10 +213,10 @@ border-color=#f9e2af
 
 ### Hyprland
 
-Suggested keybindings for `~/.config/hypr/bindings.conf`:
+Copy `config/hypr-remindy.conf` to `~/.config/hypr/conf.d/` or source it from your bindings:
 
 ```
-bindd = SUPER, R, Reminders, exec, omarchy-launch-or-focus-tui remindy
+bindd = SUPER, R, Reminders, exec, omarchy-launch-tui remindy
 bindd = SUPER SHIFT, R, Add reminder, exec, omarchy-launch-tui remindy-add
 ```
 
@@ -236,9 +237,19 @@ windowrule = size 500 350, match:class org.omarchy.remindy-add
 > [!IMPORTANT]
 > Check for conflicts with `omarchy-menu-keybindings --print` before adding.
 
-### Walker / Elephant
+### Walker
 
-Native elephant provider with quick-add syntax, fuzzy search, and state management.
+Add the prefix to `~/.config/walker/config.toml` so Walker can discover the elephant provider:
+
+```toml
+[[providers.prefixes]]
+prefix = "?"
+provider = "menus:remindy"
+```
+
+### Elephant
+
+Native Go provider plugin with quick-add syntax, fuzzy search, and state management.
 
 **Build and install:**
 
@@ -307,22 +318,29 @@ echo '{"reminders":[]}' > ~/.local/share/remindy/reminders.json
 
 ```
 remindy/
-├── bin/
-│   ├── remindy                  # Entry point — gum menu
-│   ├── remindy-add              # Add reminder (CLI + interactive)
-│   ├── remindy-list             # List reminders (gum table)
-│   ├── remindy-remove           # Remove reminder (by ID or picker)
-│   ├── remindy-check            # Daemon — check & notify
-│   ├── remindy-next             # Waybar JSON output
-│   ├── remindy-daemon           # Enable/disable systemd timer
-│   └── remindy-common           # Shared library (sourced by all)
+├── remindy                        # Entry point — gum menu
+├── remindy-add                    # Add reminder (CLI + interactive)
+├── remindy-list                   # List reminders (gum table)
+├── remindy-remove                 # Remove reminder (by ID or picker)
+├── remindy-check                  # Daemon — check & notify
+├── remindy-next                   # Waybar JSON output
+├── remindy-daemon                 # Enable/disable systemd timer
+├── remindy-common                 # Shared library (sourced by all)
 ├── config/
-│   ├── config.default           # Default config template
-│   ├── waybar-module.jsonc      # Waybar module snippet
-│   ├── waybar-style.css         # Waybar CSS snippet
-│   ├── mako-rule.conf           # Mako notification rule
+│   ├── config.example             # Default config template
+│   ├── hypr-remindy.conf          # Hyprland keybindings snippet
+│   ├── waybar-module.jsonc        # Waybar module snippet
+│   ├── waybar-style.css           # Waybar CSS snippet
+│   ├── mako-rule.conf             # Mako notification rule
+│   ├── walker/
+│   │   └── walker-prefix.toml     # Walker prefix config
 │   └── elephant/
-│       └── remindy.lua          # Walker/Elephant menu plugin
+│       ├── remindy.toml           # Elephant provider config
+│       └── remindy/               # Native Go plugin source
+│           ├── setup.go
+│           ├── makefile
+│           ├── go.mod
+│           └── go.sum
 ├── sounds/.gitkeep
 ├── install.sh
 ├── uninstall.sh
