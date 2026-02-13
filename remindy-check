@@ -26,7 +26,10 @@ for ((i = 0; i < count; i++)); do
       reminder_time=$(echo "$data" | jq -r ".reminders[$i].time")
       if [[ "$notified" == "false" && ! "$reminder_time" > "$now_datetime" ]]; then
         notify_list+=("$text")
-        data=$(echo "$data" | jq ".reminders[$i].notified = true")
+        rid=$(echo "$data" | jq -r ".reminders[$i].id")
+        data=$(echo "$data" | jq --arg id "$rid" '.reminders |= map(select(.id != $id))')
+        count=$((count - 1))
+        i=$((i - 1))
         changed=true
       fi
       ;;
@@ -60,21 +63,6 @@ for ((i = 0; i < count; i++)); do
       ;;
   esac
 done
-
-# Cleanup: remove once reminders that were notified and are older than cleanup_hours
-cutoff=$(date -d "-${cleanup_hours} hours" +%Y-%m-%dT%H:%M:%S)
-cleaned=$(echo "$data" | jq --arg cutoff "$cutoff" '
-  .reminders |= map(
-    select(
-      .type != "once" or .notified != true or .created > $cutoff
-    )
-  )
-')
-
-if [[ "$cleaned" != "$data" ]]; then
-  data="$cleaned"
-  changed=true
-fi
 
 # Write back if anything changed
 if [[ "$changed" == "true" ]]; then
