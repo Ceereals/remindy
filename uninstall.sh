@@ -12,6 +12,7 @@ SCRIPTS=(
   remindy-common
   remindy-daemon
   remindy-list
+  remindy-migrate
   remindy-next
   remindy-remove
 )
@@ -24,10 +25,15 @@ for script in "${SCRIPTS[@]}"; do
   rm -f "$INSTALL_DIR/$script"
 done
 
+# Remove installed migrations
+rm -rf "$INSTALL_DIR/migrations"
+
 # Remove data and config if --purge flag passed (safe for piped execution)
+STATE_DIR="$HOME/.local/state/remindy"
 if [[ "${1:-}" == "--purge" ]]; then
   rm -rf "$DATA_DIR"
   rm -rf "$CONFIG_DIR"
+  rm -rf "$STATE_DIR"
   echo "Data and configuration removed."
 elif [[ -t 0 ]]; then
   # Only prompt if stdin is a terminal (not piped)
@@ -35,6 +41,7 @@ elif [[ -t 0 ]]; then
     if gum confirm "Remove data and configuration too?"; then
       rm -rf "$DATA_DIR"
       rm -rf "$CONFIG_DIR"
+      rm -rf "$STATE_DIR"
       echo "Data and configuration removed."
     fi
   else
@@ -42,6 +49,7 @@ elif [[ -t 0 ]]; then
     if [[ "$answer" =~ ^[Yy]$ ]]; then
       rm -rf "$DATA_DIR"
       rm -rf "$CONFIG_DIR"
+      rm -rf "$STATE_DIR"
       echo "Data and configuration removed."
     fi
   fi
