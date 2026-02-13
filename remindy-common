@@ -9,12 +9,14 @@ mkdir -p "$DATA_DIR/sounds"
 mkdir -p ~/.config/remindy
 [[ -f "$REMINDERS_FILE" ]] || echo '{"reminders":[]}' > "$REMINDERS_FILE"
 
-# Validate JSON integrity
-if ! jq empty "$REMINDERS_FILE" 2>/dev/null; then
-  echo "Error: $REMINDERS_FILE is corrupted." >&2
-  echo "Check the file manually, or reset with:" >&2
-  echo "  echo '{\"reminders\":[]}' > $REMINDERS_FILE" >&2
-  exit 1
+# Validate JSON integrity (skip for daemon — it handles jq errors via set -e)
+if [[ "$(basename "${BASH_SOURCE[1]:-}")" != "remindy-check" ]]; then
+  if ! jq empty "$REMINDERS_FILE" 2>/dev/null; then
+    echo "Error: $REMINDERS_FILE is corrupted." >&2
+    echo "Check the file manually, or reset with:" >&2
+    echo "  echo '{\"reminders\":[]}' > $REMINDERS_FILE" >&2
+    exit 1
+  fi
 fi
 
 # Config defaults
