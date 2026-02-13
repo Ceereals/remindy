@@ -1,5 +1,13 @@
 #!/bin/bash
+set -eEo pipefail
+
 source "$(dirname "${BASH_SOURCE[0]}")/remindy-common"
+
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+  echo "Usage: $(basename "$0")"
+  echo "Interactive reminder manager — add, list, and remove reminders."
+  exit 0
+fi
 
 trap 'exit 0' INT
 
