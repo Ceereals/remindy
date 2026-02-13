@@ -3,7 +3,7 @@
 DATA_DIR=~/.local/share/remindy
 CONFIG_FILE=~/.config/remindy/config
 REMINDERS_FILE="$DATA_DIR/reminders.json"
-LOCK_FILE=/tmp/remindy.lock
+LOCK_FILE="${XDG_RUNTIME_DIR:-/tmp}/remindy.lock"
 
 mkdir -p "$DATA_DIR/sounds"
 mkdir -p ~/.config/remindy
@@ -28,7 +28,7 @@ waybar_icon="󰀠"
 lock_write() {
   local tmp="$REMINDERS_FILE.tmp"
   (
-    flock -x 200
+    flock -x -w 5 200 || { echo "Error: could not acquire lock" >&2; return 1; }
     cat > "$tmp"
     mv "$tmp" "$REMINDERS_FILE"
   ) 200>"$LOCK_FILE"
@@ -36,7 +36,7 @@ lock_write() {
 
 lock_read() {
   (
-    flock -s 200
+    flock -s -w 5 200 || { echo "Error: could not acquire lock" >&2; return 1; }
     cat "$REMINDERS_FILE"
   ) 200>"$LOCK_FILE"
 }
