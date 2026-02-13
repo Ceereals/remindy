@@ -1,13 +1,18 @@
 #!/bin/bash
+set -eEo pipefail
 
 source "$(dirname "${BASH_SOURCE[0]}")/remindy-common"
 
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+  echo "Usage: $(basename "$0")"
+  echo "Browse reminders interactively."
+  exit 0
+fi
+
 clear
 
-ICON_YES=" "
-ICON_NO=" "
-
-count=$(lock_read | jq '.reminders | length')
+data=$(lock_read)
+count=$(echo "$data" | jq '.reminders | length')
 
 if [[ "$count" -eq 0 ]]; then
   msg_warn "No reminders"
@@ -16,51 +21,5 @@ if [[ "$count" -eq 0 ]]; then
   exit 0
 fi
 
-day_num_to_name() {
-  case "$1" in
-    1) echo "Mon" ;; 2) echo "Tue" ;; 3) echo "Wed" ;; 4) echo "Thu" ;;
-    5) echo "Fri" ;; 6) echo "Sat" ;; 7) echo "Sun" ;;
-  esac
-}
-
-lock_read | jq -r '.reminders[] | "\(.id)\t\(.type)\t\(.time)\t\((.days // []) | map(tostring) | join(",") | if . == "" then "-" else . end)\t\((.notified // .last_notified // "-") | if . == "" then "-" else tostring end)\t\(.text)"' | \
-while IFS=$'\t' read -r id type time days notified text; do
-  case "$type" in
-    once)
-      day="${time:0:10}"
-      hour="${time:11:5}"
-      quando=$(date -d "$day" "+%a %d %b %Y $hour")
-      ;;
-    daily)
-      quando="Every day at $time"
-      ;;
-    weekly)
-      day_names=""
-      IFS=',' read -ra day_nums <<< "$days"
-      for dn in "${day_nums[@]}"; do
-        [[ -n "$day_names" ]] && day_names+=","
-        day_names+=$(day_num_to_name "$dn")
-      done
-      quando="Every $day_names at $time"
-      ;;
-  esac
-
-  case "$type" in
-    once)
-      if [[ "$notified" == "true" ]]; then
-        icon="$ICON_YES"
-      else
-        icon="$ICON_NO"
-      fi
-      ;;
-    *)
-      if [[ "$notified" == "-" || "$notified" == "null" ]]; then
-        icon="$ICON_NO"
-      else
-        icon="$ICON_YES"
-      fi
-      ;;
-  esac
-
-  echo "$icon $text · $type · $quando · $id"
-done | gum filter --header "$(banner_header)" --placeholder "Filter reminders..." > /dev/null
+format_reminders "$data" "$ICON_YES" "$ICON_NO" | \
+  gum filter --header "$(banner_header)" --no-limit --placeholder "Browse reminders (ESC to close)..." > /dev/null
