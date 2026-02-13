@@ -8,6 +8,11 @@ INSTALL_DIR="$HOME/.local/share/omarchy/bin"
 DATA_DIR="$HOME/.local/share/remindy"
 CONFIG_DIR="$HOME/.config/remindy"
 
+# Check required dependencies
+for cmd in jq gum flock notify-send systemctl; do
+  command -v "$cmd" &>/dev/null || { echo "Missing dependency: $cmd" >&2; exit 1; }
+done
+
 SCRIPTS=(
   remindy
   remindy-add
@@ -15,6 +20,7 @@ SCRIPTS=(
   remindy-common
   remindy-daemon
   remindy-list
+  remindy-migrate
   remindy-next
   remindy-remove
 )
@@ -37,10 +43,6 @@ UPDATING=false
 if [[ -f "$INSTALL_DIR/remindy" ]]; then
   UPDATING=true
   echo "Existing installation detected — updating..."
-  echo ""
-  echo "⚠  Check the release page for breaking changes:"
-  echo "   https://github.com/$REPO/releases"
-  echo ""
 fi
 
 # Install scripts
@@ -48,6 +50,13 @@ mkdir -p "$INSTALL_DIR"
 for script in "${SCRIPTS[@]}"; do
   cp "$SRC_DIR/$script" "$INSTALL_DIR/$script"
   chmod +x "$INSTALL_DIR/$script"
+done
+
+# Install migrations
+mkdir -p "$INSTALL_DIR/migrations"
+for migration in "$SRC_DIR"/migrations/*.sh; do
+  [[ -f "$migration" ]] || continue
+  cp "$migration" "$INSTALL_DIR/migrations/"
 done
 
 # Create data and config directories
@@ -59,7 +68,6 @@ if [[ ! -f "$CONFIG_DIR/config" ]]; then
   cat > "$CONFIG_DIR/config" <<'EOF'
 sound=true
 sound_file="$HOME/.local/share/remindy/sounds/remindy.ogg"
-cleanup_hours=24
 notification_timeout=30000
 EOF
 fi
@@ -68,6 +76,9 @@ fi
 if [[ ! -f "$DATA_DIR/reminders.json" ]]; then
   echo '{"reminders":[]}' > "$DATA_DIR/reminders.json"
 fi
+
+# Run migrations
+MIGRATIONS_DIR="$SRC_DIR/migrations" "$INSTALL_DIR/remindy-migrate"
 
 # Enable daemon (re-enable on update to pick up any service file changes)
 "$INSTALL_DIR/remindy-daemon" enable
