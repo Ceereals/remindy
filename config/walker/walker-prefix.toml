@@ -1,6 +1,6 @@
 # Add this to your ~/.config/walker/config.toml under [providers.prefixes]
-# Type "!" in Walker to access reminders
+# Type "?" in Walker to access reminders
 
 [[providers.prefixes]]
-prefix = "!"
+prefix = "?"
 provider = "menus:remindy"
