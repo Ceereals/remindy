@@ -1,6 +1,8 @@
 #!/bin/bash
 set -eEo pipefail
 
+trap 'printf "{\"text\":\"\",\"tooltip\":\"Error\",\"class\":\"error\"}\n"' ERR
+
 source "$(dirname "${BASH_SOURCE[0]}")/remindy-common"
 
 now_date=$(date +%Y-%m-%d)
