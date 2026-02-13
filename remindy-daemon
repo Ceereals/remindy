@@ -21,6 +21,7 @@ Description=Remindy checker
 Type=oneshot
 ExecStart=$CHECK_BIN
 Environment=DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/%U/bus
+Environment=XDG_RUNTIME_DIR=/run/user/%U
 EOF
 
     cat > "$TIMER_FILE" <<EOF
