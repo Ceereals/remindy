@@ -50,6 +50,68 @@ gen_id() {
   fi
 }
 
+day_num_to_name() {
+  case "$1" in
+    1) echo "Mon" ;; 2) echo "Tue" ;; 3) echo "Wed" ;; 4) echo "Thu" ;;
+    5) echo "Fri" ;; 6) echo "Sat" ;; 7) echo "Sun" ;;
+  esac
+}
+
+# Format reminders as display lines: "icon text · type · schedule · id"
+# Usage: format_reminders "$json_data" "$icon_yes" "$icon_no"
+format_reminders() {
+  local data="$1" icon_yes="$2" icon_no="$3"
+  echo "$data" | jq -r '.reminders[] | "\(.id)\t\(.type)\t\(.time)\t\((.days // []) | map(tostring) | join(",") | if . == "" then "-" else . end)\t\((.notified // .last_notified // "-") | if . == "" then "-" else tostring end)\t\(.text)"' | \
+  while IFS=$'\t' read -r id type time days notified text; do
+    case "$type" in
+      once)
+        day="${time:0:10}"
+        hour="${time:11:5}"
+        quando=$(date -d "$day" "+%a %d %b %Y $hour")
+        ;;
+      daily)
+        quando="Every day at $time"
+        ;;
+      weekly)
+        day_names=""
+        IFS=',' read -ra day_nums <<< "$days"
+        for dn in "${day_nums[@]}"; do
+          [[ -n "$day_names" ]] && day_names+=","
+          day_names+=$(day_num_to_name "$dn")
+        done
+        quando="Every $day_names at $time"
+        ;;
+    esac
+
+    case "$type" in
+      once)
+        if [[ "$notified" == "true" ]]; then
+          icon="$icon_yes"
+        else
+          icon="$icon_no"
+        fi
+        ;;
+      *)
+        if [[ "$notified" == "-" || "$notified" == "null" ]]; then
+          icon="$icon_no"
+        else
+          icon="$icon_yes"
+        fi
+        ;;
+    esac
+
+    echo "$icon $text · $type · $quando · $id"
+  done
+}
+
+ICON_YES=" "
+ICON_NO=" "
+
+valid_time() {
+  [[ "$1" =~ ^([0-9]{1,2}):([0-9]{2})$ ]] &&
+    (( BASH_REMATCH[1] < 24 && BASH_REMATCH[2] < 60 ))
+}
+
 signal_waybar() {
   pkill -RTMIN+9 waybar 2>/dev/null || true
 }
