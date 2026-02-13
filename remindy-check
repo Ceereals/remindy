@@ -73,6 +73,6 @@ for text in "${notify_list[@]}"; do
   notify-send -u critical -a "Remindy" -i alarm-symbolic -t "$notification_timeout" "⏰ Reminder" "$text"
 
   if [[ "$sound" == "true" && -f "$sound_file" ]]; then
-    paplay "$sound_file" &
+    paplay "$sound_file"
   fi
 done
