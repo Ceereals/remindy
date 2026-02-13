@@ -48,8 +48,20 @@ EOF
     echo "Remindy daemon disabled."
     ;;
 
+  status)
+    systemctl --user status "$SERVICE_NAME.timer"
+    ;;
+
+  -h|--help)
+    echo "Usage: $(basename "$0") enable|disable|status"
+    echo "  enable   Create and start the systemd user timer"
+    echo "  disable  Stop and remove the systemd user timer"
+    echo "  status   Show timer status"
+    exit 0
+    ;;
+
   *)
-    echo "Usage: $(basename "$0") enable|disable"
+    echo "Usage: $(basename "$0") enable|disable|status"
     exit 1
     ;;
 esac
