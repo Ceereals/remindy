@@ -344,7 +344,6 @@ remindy/
 │           ├── makefile
 │           ├── go.mod
 │           └── go.sum
-├── sounds/.gitkeep
 ├── mise.toml
 ├── install.sh
 ├── uninstall.sh
