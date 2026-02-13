@@ -1,0 +1,35 @@
+#!/bin/bash
+set -eEo pipefail
+
+source "$(dirname "${BASH_SOURCE[0]}")/remindy-common"
+
+MIGRATIONS_DIR="${MIGRATIONS_DIR:-$(dirname "${BASH_SOURCE[0]}")/migrations}"
+STATE_DIR="$HOME/.local/state/remindy/migrations"
+SKIPPED_DIR="$STATE_DIR/skipped"
+
+mkdir -p "$STATE_DIR" "$SKIPPED_DIR"
+
+for file in "$MIGRATIONS_DIR"/*.sh; do
+  [[ -f "$file" ]] || continue
+
+  filename="$(basename "$file")"
+
+  # Skip if already run or explicitly skipped
+  [[ -f "$STATE_DIR/$filename" ]] && continue
+  [[ -f "$SKIPPED_DIR/$filename" ]] && continue
+
+  echo "Running migration: $filename"
+  if bash "$file"; then
+    touch "$STATE_DIR/$filename"
+    echo "  Done."
+  else
+    echo "  Migration failed: $filename"
+    if gum confirm "Skip this migration and continue?"; then
+      touch "$SKIPPED_DIR/$filename"
+      echo "  Skipped."
+    else
+      echo "  Aborting."
+      exit 1
+    fi
+  fi
+done
