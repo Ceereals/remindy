@@ -10,7 +10,7 @@ One-time, daily, and weekly reminders — with desktop notifications, a Waybar w
 [![Bash](https://img.shields.io/badge/Bash-5.0+-89b4fa.svg)](https://www.gnu.org/software/bash/)
 [![Omarchy](https://img.shields.io/badge/Omarchy-skill-cba6f7.svg)](https://github.com/basecamp/omarchy)
 
-<!-- ![demo](https://raw.githubusercontent.com/Ceereals/remindy/main/assets/demo.GIF) -->
+[demo.webm](https://github.com/user-attachments/assets/10b87302-32b4-44ce-8df2-ef32648fd2bf)
 
 </div>
 
