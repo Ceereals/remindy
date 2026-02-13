@@ -4,7 +4,8 @@ source "$(dirname "${BASH_SOURCE[0]}")/remindy-common"
 
 if [[ $# -eq 0 ]]; then
   # Interactive mode
-  show_banner
+  clear
+  banner_header
   echo ""
   text=$(gum input --placeholder "What do you need to remember?")
   [[ -z "$text" ]] && exit 0

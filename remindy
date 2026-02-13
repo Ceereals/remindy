@@ -5,9 +5,7 @@ trap 'exit 0' INT
 
 while true; do
   clear
-  show_banner
-  echo ""
-  choice=$(gum choose \
+  choice=$(gum choose --header "$(banner_header)" \
     "󰀠 Add reminder" \
     " List reminders" \
     " Remove reminder" \
@@ -17,8 +15,6 @@ while true; do
     "󰀠 Add reminder")     remindy-add || true ;;
     " List reminders")
       remindy-list || true
-      echo ""
-      read -n 1 -s -r -p "Press any key to continue..."
       ;;
     " Remove reminder")  remindy-remove || true ;;
     *)  break ;;

@@ -63,8 +63,12 @@ msg_ok()   { gum style --foreground "$COLOR_SUCCESS" "✓ $*"; }
 msg_warn() { gum style --foreground "$COLOR_WARN" "$*"; }
 msg_err()  { gum style --foreground "$COLOR_ERROR" "$*" >&2; }
 
-show_banner() {
-  gum style --foreground "$COLOR_ACCENT" --bold \
+banner_header() {
+  gum style --foreground "$COLOR_ACCENT" --bold "$(banner_text)"
+}
+
+banner_text() {
+  printf '%s\n' \
     "                                                                        " \
     "                                    ,,                    ,,            " \
     "                                    db                  \`7MM            " \
@@ -75,5 +79,9 @@ show_banner() {
     "  MM    YM.    ,  MM    MM    MM    MM    MM    MM \`Mb    MM     VVV    " \
     ".JMML.   \`Mbmmd'.JMML  JMML  JMML..JMML..JMML  JMML.\`Wbmd\"MML.   ,V     " \
     "                                                                ,V      " \
-    "                                                             OOb\"       " 
+    "                                                             OOb\"       "
+}
+
+show_banner() {
+  gum style --foreground "$COLOR_ACCENT" --bold "$(banner_text)"
 }

@@ -2,6 +2,11 @@
 
 source "$(dirname "${BASH_SOURCE[0]}")/remindy-common"
 
+clear
+
+ICON_YES=" "
+ICON_NO=" "
+
 data=$(lock_read)
 count=$(echo "$data" | jq '.reminders | length')
 
@@ -11,30 +16,93 @@ if [[ "$count" -eq 0 ]]; then
 fi
 
 if [[ $# -eq 0 ]]; then
-  # Interactive mode: pick reminder via gum filter
-  show_banner
-  echo ""
-  selection=$(echo "$data" | jq -r '.reminders[] | [.id, .type, .time, .text] | @tsv' | \
-    while IFS=$'\t' read -r id type time text; do
-      printf "%s  %-7s %-20s %s\n" "$id" "$type" "$time" "$text"
-    done | gum filter --header "Select reminder to remove")
+  # Interactive mode: pick reminders via gum filter --no-limit
+  day_num_to_name() {
+    case "$1" in
+      1) echo "Mon" ;; 2) echo "Tue" ;; 3) echo "Wed" ;; 4) echo "Thu" ;;
+      5) echo "Fri" ;; 6) echo "Sat" ;; 7) echo "Sun" ;;
+    esac
+  }
 
-  [[ -z "$selection" ]] && exit 0
-  id=$(echo "$selection" | awk '{print $1}')
+  selections=$(echo "$data" | jq -r '.reminders[] | "\(.id)\t\(.type)\t\(.time)\t\((.days // []) | map(tostring) | join(",") | if . == "" then "-" else . end)\t\((.notified // .last_notified // "-") | if . == "" then "-" else tostring end)\t\(.text)"' | \
+  while IFS=$'\t' read -r id type time days notified text; do
+    case "$type" in
+      once)
+        day="${time:0:10}"
+        hour="${time:11:5}"
+        quando=$(date -d "$day" "+%a %d %b %Y $hour")
+        ;;
+      daily)
+        quando="Every day at $time"
+        ;;
+      weekly)
+        day_names=""
+        IFS=',' read -ra day_nums <<< "$days"
+        for dn in "${day_nums[@]}"; do
+          [[ -n "$day_names" ]] && day_names+=","
+          day_names+=$(day_num_to_name "$dn")
+        done
+        quando="Every $day_names at $time"
+        ;;
+    esac
+
+    case "$type" in
+      once)
+        if [[ "$notified" == "true" ]]; then
+          icon="$ICON_YES"
+        else
+          icon="$ICON_NO"
+        fi
+        ;;
+      *)
+        if [[ "$notified" == "-" || "$notified" == "null" ]]; then
+          icon="$ICON_NO"
+        else
+          icon="$ICON_YES"
+        fi
+        ;;
+    esac
+
+    echo "$icon $text · $type · $quando · $id"
+  done | gum filter --header "$(banner_header)" --no-limit --placeholder "Select reminders to remove...")
+
+  [[ -z "$selections" ]] && exit 0
+
+  # Extract IDs (last field after " · ")
+  ids=()
+  while IFS= read -r line; do
+    id="${line##* · }"
+    ids+=("$id")
+  done <<< "$selections"
+
+  # Confirm before deleting
+  sel_count=${#ids[@]}
+  if ! gum confirm "Remove $sel_count reminder(s)?"; then
+    exit 0
+  fi
+
+  # Remove all selected
+  for id in "${ids[@]}"; do
+    text=$(echo "$data" | jq -r --arg id "$id" '.reminders[] | select(.id == $id) | .text')
+    data=$(echo "$data" | jq --arg id "$id" '.reminders |= map(select(.id != $id))')
+    msg_ok "Removed: \"$text\" ($id)"
+  done
+  echo "$data" | lock_write
 else
   id="$1"
+  match=$(echo "$data" | jq --arg id "$id" '.reminders[] | select(.id == $id)')
+  if [[ -z "$match" ]]; then
+    msg_err "Reminder not found: $id"
+    exit 1
+  fi
+  text=$(echo "$match" | jq -r '.text')
+
+  if ! gum confirm "Remove \"$text\"?"; then
+    exit 0
+  fi
+
+  echo "$data" | jq --arg id "$id" '.reminders |= map(select(.id != $id))' | lock_write
+  msg_ok "Removed: \"$text\" ($id)"
 fi
 
-# Check reminder exists
-match=$(echo "$data" | jq --arg id "$id" '.reminders[] | select(.id == $id)')
-if [[ -z "$match" ]]; then
-  msg_err "Reminder not found: $id"
-  exit 1
-fi
-
-text=$(echo "$match" | jq -r '.text')
-
-echo "$data" | jq --arg id "$id" '.reminders |= map(select(.id != $id))' | lock_write
-
-msg_ok "Removed: \"$text\" (id: $id)"
 signal_waybar
