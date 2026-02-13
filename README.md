@@ -238,19 +238,31 @@ windowrule = size 500 350, match:class org.omarchy.remindy-add
 
 ### Walker / Elephant
 
+Native elephant provider with quick-add syntax, fuzzy search, and state management.
+
+**Build and install:**
+
 ```bash
-cp config/elephant/remindy.lua ~/.config/elephant/menus/remindy.lua
+cd config/elephant/remindy
+make install
 ```
 
-Add the prefix to `~/.config/walker/config.toml`:
+This detects your elephant version, clones matching source, builds the plugin, and installs it to `~/.config/elephant/providers/`.
 
-```toml
-[[providers.prefixes]]
-prefix = "!"
-provider = "menus:remindy"
+**Quick-add syntax** (type directly in elephant):
+
+- `in 30m > meeting`
+- `at 14:30 > standup`
+- `every day at 09:00 > coffee`
+- `every mon,fri at 10:00 > review`
+
+**After upgrading elephant:**
+
+```bash
+cd config/elephant/remindy
+make clean-elephant
+make install
 ```
-
-Type `!` in Walker to access reminders.
 
 ## Data storage
 
