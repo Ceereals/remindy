@@ -8,9 +8,6 @@ sound=true
 # Path to the notification sound file (OGG format)
 sound_file="$HOME/.local/share/remindy/sounds/remindy.ogg"
 
-# Hours after which fired one-time reminders are automatically cleaned up
-cleanup_hours=24
-
 # How long the desktop notification stays visible, in milliseconds
 notification_timeout=30000
 
