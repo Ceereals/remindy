@@ -1,1 +1,4 @@
 mise.toml
+
+# Elephant plugin
+config/elephant/remindy/*.so

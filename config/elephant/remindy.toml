@@ -1,0 +1,5 @@
+icon = "alarm-symbolic"
+name_pretty = "Reminders"
+min_score = 20
+hide_from_providerlist = false
+location = "~/.local/share/remindy/reminders.json"
