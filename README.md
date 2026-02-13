@@ -24,7 +24,7 @@ One-time, daily, and weekly reminders — with desktop notifications, a Waybar w
 - **Walker / Elephant** launcher integration
 - **Interactive TUI** powered by [gum](https://github.com/charmbracelet/gum)
 - **CLI mode** for scripting and aliases
-- **systemd timer** daemon — checks every minute, stays out of the way
+- **systemd timer** daemon — checks every second, stays out of the way
 
 ## Installation
 
@@ -116,8 +116,8 @@ remindy-add "Gym" every monday,wednesday,friday at 18:00
 ### Listing and removing
 
 ```bash
-remindy-list              # Show all reminders in a table
-remindy-remove            # Interactive picker
+remindy-list              # Show all reminders (filterable list)
+remindy-remove            # Interactive multi-select picker
 remindy-remove a1b2c3d4   # Remove by ID
 ```
 
@@ -128,7 +128,7 @@ remindy-daemon enable     # Create and start the systemd timer
 remindy-daemon disable    # Stop and remove it
 ```
 
-The daemon runs `remindy-check` every minute to fire notifications for due reminders.
+The daemon runs `remindy-check` every second to fire notifications for due reminders.
 
 ### Waybar output
 
@@ -287,6 +287,7 @@ Reminders live in `~/.local/share/remindy/reminders.json`:
       "text": "Standup call",
       "type": "once",
       "time": "2025-02-12T14:30:00",
+      "created": "2025-02-12T10:00:00",
       "notified": false
     },
     {
@@ -294,6 +295,7 @@ Reminders live in `~/.local/share/remindy/reminders.json`:
       "text": "Drink water",
       "type": "daily",
       "time": "09:00",
+      "created": "2025-02-12T10:00:00",
       "last_notified": "2025-02-12"
     },
     {
@@ -302,6 +304,7 @@ Reminders live in `~/.local/share/remindy/reminders.json`:
       "type": "weekly",
       "time": "10:00",
       "days": [1],
+      "created": "2025-02-12T10:00:00",
       "last_notified": "2025-02-10"
     }
   ]
@@ -320,8 +323,8 @@ echo '{"reminders":[]}' > ~/.local/share/remindy/reminders.json
 remindy/
 ├── remindy                        # Entry point — gum menu
 ├── remindy-add                    # Add reminder (CLI + interactive)
-├── remindy-list                   # List reminders (gum table)
-├── remindy-remove                 # Remove reminder (by ID or picker)
+├── remindy-list                   # List reminders (filterable list)
+├── remindy-remove                 # Remove reminder (by ID or multi-select)
 ├── remindy-check                  # Daemon — check & notify
 ├── remindy-next                   # Waybar JSON output
 ├── remindy-daemon                 # Enable/disable systemd timer
@@ -342,6 +345,7 @@ remindy/
 │           ├── go.mod
 │           └── go.sum
 ├── sounds/.gitkeep
+├── mise.toml
 ├── install.sh
 ├── uninstall.sh
 └── LICENSE
