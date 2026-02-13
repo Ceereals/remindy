@@ -13,66 +13,64 @@ count=$(echo "$data" | jq '.reminders | length')
 
 [[ "$count" -eq 0 ]] && exit 0
 
+# Extract all fields in a single jq call
+entries=$(echo "$data" | jq -r '.reminders[] | "\(.id)\t\(.type)\t\(.text)\t\(.time)\t\(if .notified == null then "" else (.notified | tostring) end)\t\(.last_notified // "")\t\((.days // []) | map(tostring) | join(","))"')
+
 changed=false
 notify_list=()
+remove_ids=()
+update_ids=()
 
-for ((i = 0; i < count; i++)); do
-  type=$(echo "$data" | jq -r ".reminders[$i].type")
-  text=$(echo "$data" | jq -r ".reminders[$i].text")
-
+while IFS=$'\t' read -r id type text time notified last_notified days; do
   case "$type" in
     once)
-      notified=$(echo "$data" | jq -r ".reminders[$i].notified")
-      reminder_time=$(echo "$data" | jq -r ".reminders[$i].time")
-      if [[ "$notified" == "false" && ! "$reminder_time" > "$now_datetime" ]]; then
+      if [[ "$notified" == "false" && ! "$time" > "$now_datetime" ]]; then
         notify_list+=("$text")
-        rid=$(echo "$data" | jq -r ".reminders[$i].id")
-        data=$(echo "$data" | jq --arg id "$rid" '.reminders |= map(select(.id != $id))')
-        count=$((count - 1))
-        i=$((i - 1))
+        remove_ids+=("$id")
         changed=true
       fi
       ;;
-
     daily)
-      reminder_time=$(echo "$data" | jq -r ".reminders[$i].time")
-      last_notified=$(echo "$data" | jq -r ".reminders[$i].last_notified // \"\"")
-
-      if [[ "$reminder_time" == "$now_time" && "$last_notified" != "$now_date" ]]; then
+      if [[ "$time" == "$now_time" && "$last_notified" != "$now_date" ]]; then
         notify_list+=("$text")
-        data=$(echo "$data" | jq ".reminders[$i].last_notified = \"$now_date\"")
+        update_ids+=("$id")
         changed=true
       fi
       ;;
-
     weekly)
-      reminder_time=$(echo "$data" | jq -r ".reminders[$i].time")
-      last_notified=$(echo "$data" | jq -r ".reminders[$i].last_notified // \"\"")
-      days=$(echo "$data" | jq -r ".reminders[$i].days[]")
-
       match=false
-      for d in $days; do
+      IFS=',' read -ra day_list <<< "$days"
+      for d in "${day_list[@]}"; do
         [[ "$d" == "$now_dow" ]] && match=true
       done
 
-      if [[ "$match" == "true" && "$reminder_time" == "$now_time" && "$last_notified" != "$now_date" ]]; then
+      if [[ "$match" == "true" && "$time" == "$now_time" && "$last_notified" != "$now_date" ]]; then
         notify_list+=("$text")
-        data=$(echo "$data" | jq ".reminders[$i].last_notified = \"$now_date\"")
+        update_ids+=("$id")
         changed=true
       fi
       ;;
   esac
-done
+done <<< "$entries"
 
-# Write back if anything changed
+# Write back if anything changed — single jq pass for all mutations
 if [[ "$changed" == "true" ]]; then
-  echo "$data" | lock_write
+  # Build jq filter: remove once reminders, update last_notified for daily/weekly
+  jq_filter="."
+  for id in "${remove_ids[@]}"; do
+    jq_filter+=" | .reminders |= map(select(.id != \"$id\"))"
+  done
+  for id in "${update_ids[@]}"; do
+    jq_filter+=" | .reminders |= map(if .id == \"$id\" then .last_notified = \"$now_date\" else . end)"
+  done
+
+  echo "$data" | jq "$jq_filter" | lock_write
   signal_waybar
 fi
 
 # Send notifications
 for text in "${notify_list[@]}"; do
-  notify-send -u critical -a "Remindy" -i alarm-symbolic -t "${notification_timeout:-10000}" "⏰ Reminder" "$text"
+  notify-send -u critical -a "Remindy" -i alarm-symbolic -t "$notification_timeout" "⏰ Reminder" "$text"
 
   if [[ "$sound" == "true" && -f "$sound_file" ]]; then
     paplay "$sound_file" &
